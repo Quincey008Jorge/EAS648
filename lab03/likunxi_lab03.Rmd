@@ -255,10 +255,10 @@ mean_point_Nature <- animateMichNature %>%
 p3 <- mich + theme_void() + 
   geom_polygon(data = mich_county, fill = NA, color = "white") +
   geom_polygon(color = "black", fill = NA) +
-  geom_point(data = animateMichNature, aes(longitude, latitude), inherit.aes = FALSE) +
   # Plot the historical mean points with geom_path before the transition
   geom_path(data = mean_point_Nature, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 1.5) +
   geom_point(data = mean_point_Nature, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 3) +
+  ggtitle('Mean Center of Nature Type Photos in Michigan')+
   transition_reveal(date) +
   # Optional: Add a legend title for the colour aesthetic
   scale_color_discrete(name = "Month")
@@ -266,6 +266,7 @@ p3 <- mich + theme_void() +
 animate(p3, fps = 2)
 
 ```
+
 From the animation we can see that the location of mean point varies a lot by month. Now we do the same thing of Not-Nature type photos. 
 
 ```{r}
@@ -282,16 +283,17 @@ mean_point_notNature <- animateMichNotNature %>%
 p3 <- mich + theme_void() + 
   geom_polygon(data = mich_county, fill = NA, color = "white") +
   geom_polygon(color = "black", fill = NA) +
-  geom_point(data = animateMichNotNature, aes(longitude, latitude), inherit.aes = FALSE) +
   # Plot the historical mean points with geom_path before the transition
   geom_path(data = mean_point_notNature, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 1.5) +
   geom_point(data = mean_point_notNature, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 3) +
+  ggtitle('Mean Center of Not-Nature Type Photos in Michigan')+
   transition_reveal(date) +
   # Optional: Add a legend title for the colour aesthetic
   scale_color_discrete(name = "Month")
 
 animate(p3, fps = 2)
 ```
+
 From the result we can see that the mean points seems distribute more tightly in lower bottom part in Lower Peninsula, majorly around large cities like Grand Rapids, Lansing and Detroit.
 What's more, we can plot the variance of longitudes and latitudes of Nature and Not-Nature type photos to see the difference of their changing trends during a year.
 ```{r}
@@ -310,35 +312,73 @@ variance_notNature <- mean_point_notNature %>%
 
 variance_nature$type <- "nature"
 variance_notNature$type <- "notnature"
-combined_df <- bind_rows(variance_nature, variance_notNature)
+combined_variance <- bind_rows(variance_nature, variance_notNature)
 
 # Now, plot the combined data frame
 # Plot variance of longitude
-ggplot(combined_df, aes(x = month, y = var_lon, color = type)) +
+ggplot(combined_variance, aes(x = month, y = var_lon, color = type)) +
   geom_line() +
   labs(x = "Month", y = "Variance of Longitude", 
        title = "Variance of Longitude by Month",
        color = "Dataframe")
 
 # Plot variance of latitude
-ggplot(combined_df, aes(x = month, y = var_lat, color = type)) +
+ggplot(combined_variance, aes(x = month, y = var_lat, color = type)) +
   geom_line() +
   labs(x = "Month", y = "Variance of Latitude", 
        title = "Variance of Latitude by Month",
        color = "Dataframe")
 ```
+
+
 From the graphs we can summarize these characteristics of the variance of lons and lats:
 (1) Nature and Not-Nature photos' variance of Longitude&Latitude will show different changing trend from June to November, which happen seems to be the non-snowing seasons of Michigan, that indicates that people/tourists  will separately doing nature activities(taking Nature photos) and non-nature activities(taking Not-Nature photos) in different places during these months.
 (2) Both Nature photos' variance of Longitude&Latitude are greater than Non-Nature variance, that indicates that places that people willing to taking Nature photos are more disperse than places taking Non-Nature photos. 
 
 
 
+```{r}
+
+mean_nature <- mean_point_Nature %>%
+  mutate(month = lubridate::month(date)) %>%
+  group_by(month) %>%
+  summarise(mean_lon = mean(mean_lon, na.rm = TRUE),
+            mean_lat = mean(mean_lat, na.rm = TRUE))
+
+mean_notNature <- mean_point_notNature %>%
+  mutate(month = lubridate::month(date)) %>%
+  group_by(month) %>%
+  summarise(mean_lon = mean(mean_lon, na.rm = TRUE),
+            mean_lat = mean(mean_lat, na.rm = TRUE))
+
+mean_nature$type <- "nature"
+mean_notNature$type <- "notnature"
+combined_mean <- bind_rows(mean_nature, mean_notNature)
+
+# Now, plot the combined data frame
+# Plot mean of longitude
+ggplot(combined_mean, aes(x = month, y = mean_lon, color = type)) +
+  geom_line() +
+  labs(x = "Month", y = "Mean of Longitude", 
+       title = "Mean of Longitude by Month ",
+       color = "Dataframe")
+
+# Plot variance of latitude
+ggplot(combined_mean, aes(x = month, y = mean_lat, color = type)) +
+  geom_line() +
+  labs(x = "Month", y = "Mean of Latitude", 
+       title = "Mean of Latitude by Month",
+       color = "Dataframe")
+```
 
 
 2. Social media data include various sources of noise related to the frequency of sharing photographs that can obscure meaningful patterns. Your task is to develop a technique for noise reduction that surpasses basic filtering methods. Additionally, generate a visually engaging GIF that elucidates the spatiotemporal dynamics within the data. Alongside this, propose a hypothesis that elucidates the observed patterns based on your knowledge of the region and geographic processes. Your hypothesis should reflect your understanding of the factors of social media sharing and how they influence the temporal and spatial aspects of photograph sharing.
 
 
-In this Flickr dataset I notice that one user may upload multiple photos in the same data at the same spot, which might cause noise to the following analysis that these duplicate photos will just provide one single point of information to the analysis. So I   
+In this Flickr dataset I notice that one user may upload multiple photos in the same data at the same spot, which might cause noise to the following analysis that these duplicate photos will just provide one single point of information to the analysis. So my filtering method for the noise is that using   `distinct` function in dplyr library to filter the duplicate photos. We assume that due to spots for photo-taking tend to more disperse and isolated in nature type areas, and people will be more excited in taking photos as souvenirs and memories people may take, the variance of filtered dataset and non-filtered dataset will be larger in traveling season than other seasons since people may add more "noise" photos to the dataset in traveling season. 
+
+1.Data Filtering
+According to the methodology I mentioned above, we first filter out the 'noise' from the original dataset.
 ```{r}
 library(dplyr)
 
@@ -349,8 +389,92 @@ animateMich_filtered <- animateMich %>%
 
 ```
 
+2.Nature Photos' Location Visualization
+```{r}
+animateMichNature_filter <-animateMich_filtered %>% 
+filter(date >= as.Date('2010-01-01') & date <= as.Date('2010-12-31') & Nature == "TRUE") 
+
+# Calculate mean points on each day and add month column
+mean_point_Nature_filter <- animateMichNature_filter %>%
+  group_by(date) %>%
+  summarise(mean_lon = mean(longitude, na.rm = TRUE),
+            mean_lat = mean(latitude, na.rm = TRUE)) %>%
+  mutate(month = lubridate::month(date))
+
+p <- mich + theme_void() + 
+  geom_polygon(data = mich_county, fill = NA, color = "white") +
+  geom_polygon(color = "black", fill = NA) +
+  # Plot the historical mean points with geom_path before the transition
+  geom_path(data = mean_point_Nature_filter, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 1.5) +
+  geom_point(data = mean_point_Nature_filter, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 3) +
+  ggtitle('Mean Center of Nature Type Photos in Michigan after filtering')+
+  transition_reveal(date) +
+  # Optional: Add a legend title for the colour aesthetic
+  scale_color_discrete(name = "Month")
+
+animate(p, fps = 2)
+```
+3.Non Nature Photos' Location Visualization
+```{r}
+animateMichNotNature_filter <-animateMich_filtered %>% 
+filter(date >= as.Date('2010-01-01') & date <= as.Date('2010-12-31') & Nature == "FALSE") 
+
+# Calculate mean points on each day and add month column
+mean_point_notNature_filter <- animateMichNotNature_filter %>%
+  group_by(date) %>%
+  summarise(mean_lon = mean(longitude, na.rm = TRUE),
+            mean_lat = mean(latitude, na.rm = TRUE)) %>%
+  mutate(month = lubridate::month(date))
+
+p <- mich + theme_void() + 
+  geom_polygon(data = mich_county, fill = NA, color = "white") +
+  geom_polygon(color = "black", fill = NA) +
+  # Plot the historical mean points with geom_path before the transition
+  geom_path(data = mean_point_notNature_filter, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 1.5) +
+  geom_point(data = mean_point_notNature_filter, aes(mean_lon, mean_lat, group = 1, color = as.factor(month)), size = 3) +
+  ggtitle('Mean Center of Not-Nature Type Photos in Michigan after filtering')+
+  transition_reveal(date) +
+  # Optional: Add a legend title for the colour aesthetic
+  scale_color_discrete(name = "Month")
+
+animate(p, fps = 2)
+```
 
 
+4.Variance Visualization
+Lastly we plot the variance of the mean points of the filtered dataset and original dataset and see whether there is any difference.
+```{r}
+variance_nature_filter <- mean_point_Nature_filter %>%
+  mutate(month = lubridate::month(date)) %>%
+  group_by(month) %>%
+  summarise(var_lon = var(mean_lon, na.rm = TRUE),
+            var_lat = var(mean_lat, na.rm = TRUE))
 
+variance_notNature_filter <- mean_point_notNature_filter %>%
+  mutate(month = lubridate::month(date)) %>%
+  group_by(month) %>%
+  summarise(var_lon = var(mean_lon, na.rm = TRUE),
+            var_lat = var(mean_lat, na.rm = TRUE))
 
+variance_nature_filter$type <- "nature_filter"
+variance_notNature_filter$type <- "notnature_filter"
+combined_nature_filter <- bind_rows(variance_nature, variance_nature_filter)
+combined_notNature_filter <- bind_rows(variance_notNature,variance_notNature_filter)
 
+# Now, plot the combined data frame
+# Plot mean of longitude
+ggplot(combined_nature_filter, aes(x = month, y = var_lon, color = type)) +
+  geom_line() +
+  labs(x = "Month", y = "Variance of Longitude", 
+       title = "Variance of Longitude by Month",
+       color = "Dataframe")
+
+# Plot variance of latitude
+ggplot(combined_nature_filter, aes(x = month, y = var_lat, color = type)) +
+  geom_line() +
+  labs(x = "Month", y = "Variance of Latitude of original and filtered data", 
+       title = "Variance of Latitude by Month of original and filtered data",
+       color = "Dataframe")
+```
+
+We can find that in terms of longitude, two datasets have difference in months from July to December, which may indicate that traveling seasons in Michigan are from July to December and January. The figure of latitude also indicates that January, May, July, August and October, which also make sense in some degree according to Michigan's ideal tourist seasons given by Google. 
