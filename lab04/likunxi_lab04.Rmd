@@ -72,6 +72,7 @@ ggplot(infamy_sentiment, aes(index, sentiment, fill = chapter)) +
   xlab('Line')+
   ggtitle("Sentimental Analysis of A Universal History of Infamy")
 ```
+
 3. positive and negative words Evaluation
 Inner join the lexicon and data and then count the number of words based on positive and negative sentiment.
 ```{r}
@@ -141,21 +142,33 @@ for (line in theologian) {
 }
 
 tidy_theologian <- theologian_df %>%
-  mutate(sentence_id = row_number()) %>% # add sentence index within each chapter
-  ungroup()
+  mutate(element_id = row_number()) %>% # add sentence index within each chapter
+  ungroup() %>%
+  unnest_tokens(word, text)
+
+theologian_sentiment <- tidy_theologian %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(element_id, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
 
 theologian_sentiment_sent <- theologian_df %>%
     get_sentences() %>%
     sentiment_by(by = c('element_id'))%>%
   as.data.frame()
 
-ggplot(theologian_sentiment_sent, aes(element_id, ave_sentiment)) +
-  geom_col(fill = "pink",show.legend = TRUE)+
-  xlab('Line')+
-  ggtitle("Sentimental Analysis of A Theologian in Death")
+merged_df <- merge(theologian_sentiment_sent, theologian_sentiment, by = "element_id")
+
+ggplot(merged_df, aes(element_id)) +
+  geom_col(aes(y=sentiment, fill = 'word based'), alpha = 0.5) +
+  geom_col(aes(y=ave_sentiment, fill = 'sentence based'), alpha = 1.0) +
+  xlab('Line') +
+  ggtitle("Sentimental Analysis of A Theologian in Death") +
+  scale_fill_manual(values = c('sentence based' = 'pink', 'word based' = 'blue')) +
+  guides(fill=guide_legend(title=""))
 
 ```
 
-From the results, it can be observed that the absolute scores of the majority of the paragraph are less than 0.2. Furthermore, the tone fluctuates several times, initially in the positive domain before shifting to the negative domain.
+From the results, we can see that the positive/negative trend between word based analysis and sentence based analysis are basically similar while amplitudes of them are quite different. In terms of sentence based analysis result, it can be observed that the absolute scores of the majority of the paragraph are less than 0.2. Furthermore, the tone fluctuates several times, initially in the positive domain before shifting to the negative domain. 
 
 
