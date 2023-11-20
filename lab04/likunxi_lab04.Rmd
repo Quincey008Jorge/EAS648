@@ -132,7 +132,13 @@ ggplot(infamy_sentiment_sent, aes(sentence_id, ave_sentiment, fill = chapter)) +
 
 From the results of a sentence-based sentiment analysis, it becomes evident that the emotional tone in the chapters is largely neutral, though slightly leaning towards the negative and critical. The central portions of most chapters have low absolute sentiment scores, with several sentences reporting extremely negative scores, while only a handful reflect high positive scores. Interestingly, in many chapters of the novel, Borges often writes 'positive' sentences near the chapter's end, followed by negative ones. This tone is apparent in chapters such as 'The Dread Redeemer Lazarus Morell' and 'Tom Castro, the Implausible Impostor'. 
 
-To illustrate this further, let's consider a paragraph from the 'ETCETERA' chapter, which tells the story of a disingenuous and pompous theologian amidst some magical realism elements. Written in an understated tone and brimming with sarcasm and irony, a number of sentences make it challenging to categorize them as either positive or negative from my perspective. Next, I will conduct a sentiment analysis of the text to see the results it yields.
+To illustrate this further, let's consider a paragraph from the 'ETCETERA' chapter, which tells the story of a disingenuous and pompous theologian amidst some magical realism elements. Written in an understated tone and brimming with sarcasm and irony, a number of sentences make it challenging to categorize them as either positive or negative from my perspective. 
+
+Some extracts from the paragraph like:
+The angels told me that when Melancthon died he was provided with a house deceptively like the one in which he lived in this world. (This happens to most newcomers in eternity upon their first arrival - it is why they are ignorant of their death, and think they are still in the natural world.) All the things in his room were similar to those he had had before - the table, the desk with its drawers, the shelves of books. 
+As soon as Melancthon awoke in this new abode, he sat at his table, took up his literary work, and spent several days writing - as usual - on justification by faith alone, without so much as a single word on charity. This omission being remarked by the angels, they sent messengers to question him. ‘I have proved beyond refutation,’ Melancthon replied to them, ‘that there is nothing in charity essential to the soul, and that to gain salvation faith is enough.’ He spoke with great assurance, unsuspecting that he was dead and that his lot lay outside Heaven. When the angels heard him say these things, they departed.
+
+Next, I will conduct two types of sentiment analysis based on sentence and word of the text to see the results it yields.
 
 ```{r}
 theologian <- readLines('A Theologian in Death.txt')
